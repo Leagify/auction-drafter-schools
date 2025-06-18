@@ -8,7 +8,7 @@ The goal is for this repository will be a Blazor WASM (Webassembly) C# SignalR w
 + Users can log in as one of several roles. A user can have multiple roles. Here are the roles that exist, and a general description:
   - Auction master. They can create an auction for a league.
   - Team manager. They can bid for a school for their team
-  - Auction viewer. They can view the auction
+  - Auction viewer. They can view the auction.
 
 + Items up for auction will have two properties (similar to Player and Position)
 + Each bidder will be trying to fill a "roster" of "positions"
