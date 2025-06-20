@@ -1,15 +1,32 @@
 # Leagify Auction Drafter
 An auction draft webapp for Leagify, specifically the NFL Draft League
-
-
 The goal is for this repository will be a Blazor WASM (Webassembly) C# SignalR web application.
+
+
+
+
 
 ## General design:
 + Users can log in as one of several roles. A user can have multiple roles. Here are the roles that exist, and a general description:
   - Auction master. They can create an auction for a league.
   - Team manager. They can bid for a school for their team
   - Auction viewer. They can view the auction.
++ It would be nice if you could log in using Google.
 
++ Team managers pick from a "draft board".
++ At this time, the draft board loads information from a CSV draft template file uploaded by the auction master.  The format of the draft template is similar to the template at the root of this repo, named "sampleDraftTemplate.csv"
++ The Draft Template contains several fields. I will explain them here.
+  - School : 
+  - Conference : 
+  - ProjectedPoints : 
+  - NumberOfProspects : 
+  - SchoolURL : 
+  - SuggestedAuctionValue :
+  - LeagifyPosition :
+  - ProjectedPointsAboveAverage : 
+  - ProjectedPointsAboveReplacement :
+  - AveragePointsForPosition :
+  - ReplacementValueAverageForPosition :
 + Items up for auction will have two properties (similar to Player and Position)
 + Each bidder will be trying to fill a "roster" of "positions"
 + Each bidder will have a budget, which is editable before the auction begins, but not afterwards.
@@ -32,10 +49,18 @@ The goal is for this repository will be a Blazor WASM (Webassembly) C# SignalR w
   - The player name
   - The position
   - The auction cost
-  
+
+# The Leagify NFL Draft Game
++ The goal is to have the most points at the end of the draft.
++ “Team managers” bid on schools 
++ Bonus points are provided for picks that are the result of a trade, which adds a little variance to the game. The highest scoring coach at the end of the NFL Draft is the winner. This game runs once per year, corresponding to the NFL draft.
++ Each school is
++ Schools have athletes. Those athletes are drafted in the NFL Draft. Those draft picks correspond to a value chart created by Leagify.
+
+
 Nice to haves:
 
-+ We could save the auction CSV result file somewhere on the server for later viewing
++ It would be nice for the "Auction Master" could save the auction CSV result file somewhere on the server for later viewing
 + We could color code the "positions"
 
 Technologies:
