@@ -9,14 +9,14 @@ The goal is for this repository will be a Blazor WASM (Webassembly) C# SignalR w
 ## General design:
 + Users can log in as one of several roles. A user can have multiple roles. Here are the roles that exist, and a general description:
   - Auction master. They can create an auction for a league.
-  - Team manager. They can bid for a school for their team
+  - Team coach. They can bid for a school for their team and assign it to a position on their roster
   - Auction viewer. They can view the auction.
 + It would be nice if you could log in using Google.
 
-+ Team managers pick from a "draft board".
++ Team coaches pick from a "draft board".
 + At this time, the draft board loads information from a CSV draft template file uploaded by the auction master.  The format of the draft template is similar to the template at the root of this repo, named "sampleDraftTemplate.csv"
 + The Draft Template contains several fields. I will explain them here.
-  - School : 
+  - School : The school that the 
   - Conference : 
   - ProjectedPoints : 
   - NumberOfProspects : 
@@ -27,7 +27,7 @@ The goal is for this repository will be a Blazor WASM (Webassembly) C# SignalR w
   - ProjectedPointsAboveReplacement :
   - AveragePointsForPosition :
   - ReplacementValueAverageForPosition :
-+ Items up for auction will have two properties (similar to Player and Position)
++ Items up for auction will have several main properties (similar to Player and Position)
 + Each bidder will be trying to fill a "roster" of "positions"
 + Each bidder will have a budget, which is editable before the auction begins, but not afterwards.
 + Bidders agree to join an "auction" and the auction order is set up in a normal order.
@@ -46,22 +46,22 @@ The goal is for this repository will be a Blazor WASM (Webassembly) C# SignalR w
 + Bidding continues until each player's roster is full.
 + At the completion of the auction, a CSV can be downloaded, which contains:
   - The bidder name
-  - The player name
-  - The position
+  - The school name
+  - The conference position that the bidder put the school into
   - The auction cost
 
 # The Leagify NFL Draft Game
 + The goal is to have the most points at the end of the draft.
-+ “Team managers” bid on schools 
++ “Team coaches” bid on schools 
 + Bonus points are provided for picks that are the result of a trade, which adds a little variance to the game. The highest scoring coach at the end of the NFL Draft is the winner. This game runs once per year, corresponding to the NFL draft.
-+ Each school is
++ Each school is a part of a Conference. Generally, those conferences correspond to positions, but there are also "Flex" positions that accomodate several different conference designations.
 + Schools have athletes. Those athletes are drafted in the NFL Draft. Those draft picks correspond to a value chart created by Leagify.
 
 
 Nice to haves:
 
 + It would be nice for the "Auction Master" could save the auction CSV result file somewhere on the server for later viewing
-+ We could color code the "positions"
++ We could color code the "positions" via CSS or something.
 
 Technologies:
 + C#
