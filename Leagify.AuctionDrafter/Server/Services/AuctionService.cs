@@ -18,13 +18,15 @@ namespace Leagify.AuctionDrafter.Server.Services
     public class AuctionService : IAuctionService
     {
         private readonly ICsvParsingService _csvParsingService;
+        private readonly ILogger<AuctionService> _logger;
         // In-memory store for now
         private readonly List<Auction> _auctions = new List<Auction>();
         private static int _nextAuctionId = 1;
 
-        public AuctionService(ICsvParsingService csvParsingService)
+        public AuctionService(ICsvParsingService csvParsingService, ILogger<AuctionService> logger)
         {
             _csvParsingService = csvParsingService;
+            _logger = logger;
         }
 
         public async Task<Auction> CreateAuctionAsync(string auctionName, int auctionMasterUserId, Stream? schoolDataCsvStream)
@@ -41,7 +43,10 @@ namespace Leagify.AuctionDrafter.Server.Services
 
             if (schoolDataCsvStream != null)
             {
+                _logger.LogInformation("Processing school data CSV for auction {AuctionName}.", auctionName);
                 var schools = await _csvParsingService.ParseSchoolsFromCsvAsync(schoolDataCsvStream);
+                _logger.LogInformation("Parsed {SchoolCount} schools from CSV for auction {AuctionName}.", schools.Count, auctionName);
+
                 // In a real DB scenario, these schools would be linked to this auction.
                 // For in-memory, we can add them to the auction's collection.
                 // We might also want to assign new IDs to these schools if they are specific to this auction instance.
@@ -52,9 +57,15 @@ namespace Leagify.AuctionDrafter.Server.Services
                     // school.AuctionId = auction.Id; // If School model had AuctionId
                 }
                 auction.SchoolsAvailable = schools;
+                _logger.LogInformation("Assigned {SchoolCount} schools to auction {AuctionName}.", auction.SchoolsAvailable.Count, auctionName);
+            }
+            else
+            {
+                _logger.LogInformation("No school data CSV provided for auction {AuctionName}.", auctionName);
             }
 
             _auctions.Add(auction);
+            _logger.LogInformation("Auction {AuctionName} created with ID {AuctionId} and {SchoolCount} schools.", auction.Name, auction.Id, auction.SchoolsAvailable.Count);
             return auction;
         }
 

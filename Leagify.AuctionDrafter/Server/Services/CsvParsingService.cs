@@ -15,14 +15,24 @@ namespace Leagify.AuctionDrafter.Server.Services
 
     public class CsvParsingService : ICsvParsingService
     {
+        private readonly ILogger<CsvParsingService> _logger;
+
+        public CsvParsingService(ILogger<CsvParsingService> logger)
+        {
+            _logger = logger;
+        }
+
         public async Task<List<School>> ParseSchoolsFromCsvAsync(Stream csvStream)
         {
             var schools = new List<School>();
-            // Ensure stream is at the beginning if it's seekable, though typically for uploads it won't be.
-            // if (csvStream.CanSeek)
-            // {
-            //    csvStream.Position = 0;
-            // }
+            int totalLinesRead = 0;
+            int headerLinesSkipped = 0;
+            int whitespaceLinesSkipped = 0;
+            int malformedLinesSkipped = 0;
+            int parsingErrorLinesSkipped = 0;
+            int successfullyParsedSchools = 0;
+
+            _logger.LogInformation("Starting CSV parsing for schools.");
 
             using (var reader = new StreamReader(csvStream))
             {
@@ -31,15 +41,18 @@ namespace Leagify.AuctionDrafter.Server.Services
 
                 while ((line = await reader.ReadLineAsync()) != null)
                 {
+                    totalLinesRead++;
                     if (isHeader)
                     {
                         isHeader = false; // Skip header row
+                        headerLinesSkipped++;
                         // TODO: Optionally validate header columns here
                         continue;
                     }
 
                     if (string.IsNullOrWhiteSpace(line))
                     {
+                        whitespaceLinesSkipped++;
                         continue; // Skip empty lines
                     }
 
@@ -47,8 +60,8 @@ namespace Leagify.AuctionDrafter.Server.Services
 
                     if (columns.Length < 11) // Expecting at least 11 columns based on CSV structure
                     {
-                        // Log or handle malformed row
-                        Console.WriteLine($"Skipping malformed CSV row: {line}");
+                        _logger.LogWarning("Skipping malformed CSV row (expected at least 11 columns, got {ActualColumns}): {RowData}", columns.Length, line);
+                        malformedLinesSkipped++;
                         continue;
                     }
 
@@ -69,15 +82,20 @@ namespace Leagify.AuctionDrafter.Server.Services
                             ReplacementValueAverageForPosition = TryParseNullableDouble(columns[10])
                         };
                         schools.Add(school);
+                        successfullyParsedSchools++;
                     }
                     catch (Exception ex)
                     {
-                        // Log or handle parsing error for a specific row
-                        Console.WriteLine($"Error parsing row: {line}. Error: {ex.Message}");
+                        _logger.LogError(ex, "Error parsing CSV row: {RowData}", line);
+                        parsingErrorLinesSkipped++;
                         // Decide whether to skip the row or throw, for now, skip.
                     }
                 }
             }
+
+            _logger.LogInformation("CSV Parsing Summary: Total Lines Read: {TotalLinesRead}, Headers Skipped: {HeaderLinesSkipped}, Whitespace Skipped: {WhitespaceLinesSkipped}, Malformed Skipped: {MalformedLinesSkipped}, Parsing Errors Skipped: {ParsingErrorLinesSkipped}, Successfully Parsed Schools: {SuccessfullyParsedSchools}",
+                totalLinesRead, headerLinesSkipped, whitespaceLinesSkipped, malformedLinesSkipped, parsingErrorLinesSkipped, successfullyParsedSchools);
+
             return schools;
         }
 
