@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Leagify.AuctionDrafter.Server.Data;
 using Leagify.AuctionDrafter.Server.Services; // For ICsvParsingService, IAuctionService
+using Microsoft.AspNetCore.Builder; // Added for WebApplication extension methods
 // No need to explicitly add 'using Leagify.AuctionDrafter.Server' for SeedIdentityData if namespace matches Program.cs implicit namespace
 
 var builder = WebApplication.CreateBuilder(args);
