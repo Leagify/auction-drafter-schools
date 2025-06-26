@@ -66,7 +66,7 @@ A default launch configuration is usually sufficient for Blazor WASM projects ho
                 "type": "coreclr",
                 "request": "launch",
                 "preLaunchTask": "build",
-                "program": "${workspaceFolder}/Leagify.AuctionDrafter/Server/bin/Debug/net7.0/Leagify.AuctionDrafter.Server.dll",
+                "program": "${workspaceFolder}/Leagify.AuctionDrafter/Server/bin/Debug/net8.0/Leagify.AuctionDrafter.Server.dll",
                 "args": [],
                 "cwd": "${workspaceFolder}/Leagify.AuctionDrafter/Server",
                 "stopAtEntry": false,

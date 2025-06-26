@@ -107,7 +107,7 @@ If `Leagify.AuctionDrafter.Server` remains a full ASP.NET Core application, depl
         *   Subscription, Resource Group.
         *   **Name**: Unique name for your app service (e.g., `leagify-auctiondrafter-api`).
         *   **Publish**: Code.
-        *   **Runtime stack**: .NET 7 (or your project's version).
+        *   **Runtime stack**: .NET 8 (or your project's version).
         *   **Operating System**: Linux (often more cost-effective) or Windows.
         *   **Region**.
     *   **App Service Plan**: Create new or use existing. Choose a pricing tier.
