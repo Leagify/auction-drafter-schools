@@ -34,7 +34,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Register custom application services
-builder.Services.AddScoped<ICsvParsingService, CsvParsingService>();
+builder.Services.AddSingleton<ICsvParsingService, CsvParsingService>(); // Changed from Scoped to Singleton
 builder.Services.AddSingleton<IAuctionService, AuctionService>(); // Singleton for in-memory auction data
 
 var app = builder.Build();
