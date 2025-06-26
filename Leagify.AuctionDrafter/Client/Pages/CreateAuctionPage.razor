@@ -124,7 +124,7 @@
     private void NavigateToAuction(int auctionId)
     {
         // Assuming you'll have a page like "/auction/{auctionId}"
-        // NavigationManager.NavigateTo($"/auction-details/{auctionId}");
+        NavigationManager.NavigateTo($"/auction-details/{auctionId}");
         // For now, just clear the success message or stay on page
         createdAuction = null;
         model = new CreateAuctionClientModel();
