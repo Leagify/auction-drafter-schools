@@ -1,42 +1,89 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Leagify.AuctionDrafter.Server.Data;
+using Leagify.AuctionDrafter.Server.Services; // For ICsvParsingService, IAuctionService
+// No need to explicitly add 'using Leagify.AuctionDrafter.Server' for SeedIdentityData if namespace matches Program.cs implicit namespace
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews(); // For API controllers
-builder.Services.AddRazorPages(); // For Blazor hosting support
+builder.Services.AddRazorPages(); // For Blazor hosting support & Identity UI
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-// Only add Swagger/OpenAPI if you intend to use them for your API.
-// builder.Services.AddEndpointsApiExplorer();
-// builder.Services.AddSwaggerGen();
+// Configure DbContext for Identity using In-Memory database
+builder.Services.AddDbContext<ApplicationIdentityDbContext>(options =>
+    options.UseInMemoryDatabase("IdentityDb")); // Name of the in-memory database
+
+// Add ASP.NET Core Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+    {
+        // Configure identity options here if needed (e.g., password requirements)
+        options.SignIn.RequireConfirmedAccount = false; // For simplicity in dev, typically true
+        options.Password.RequireDigit = false;
+        options.Password.RequiredLength = 4;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireLowercase = false;
+    })
+    .AddEntityFrameworkStores<ApplicationIdentityDbContext>()
+    .AddDefaultTokenProviders(); // For password reset, email confirmation tokens etc.
+
+// Swagger/OpenAPI (optional, keep if API exploration is desired)
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Register custom application services
+builder.Services.AddScoped<ICsvParsingService, CsvParsingService>();
+builder.Services.AddSingleton<IAuctionService, AuctionService>(); // Singleton for in-memory auction data
 
 var app = builder.Build();
+
+// Seed initial Identity data (roles, default users)
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        // Ensure ApplicationIdentityDbContext is created for in-memory
+        var context = services.GetRequiredService<ApplicationIdentityDbContext>();
+        context.Database.EnsureCreated();
+
+        // Assuming SeedIdentityData is in Leagify.AuctionDrafter.Server namespace
+        await Leagify.AuctionDrafter.Server.SeedIdentityData.Initialize(services);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the Identity database.");
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseWebAssemblyDebugging(); // Enable debugging for Blazor WASM
-    // if (builder.Services.Any(s => s.ServiceType == typeof(SwaggerGenerator))) // Check if Swagger is registered
-    // {
-    //     app.UseSwagger();
-    //     app.UseSwaggerUI();
-    // }
+    app.UseWebAssemblyDebugging();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 else
 {
-    app.UseExceptionHandler("/Error"); // Optional: Add a generic error handler
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 
-app.UseBlazorFrameworkFiles(); // Serve Blazor framework files
-app.UseStaticFiles(); // Serve static files from wwwroot
+app.UseBlazorFrameworkFiles();
+app.UseStaticFiles();
 
 app.UseRouting();
 
-app.MapRazorPages(); // Map Razor Pages
-app.MapControllers(); // Map API controllers (if you have any)
-app.MapFallbackToFile("index.html"); // Fallback to Blazor app for client-side routes
+// Add Authentication and Authorization middleware
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapRazorPages();
+app.MapControllers();
+app.MapFallbackToFile("index.html");
 
 app.Run();
