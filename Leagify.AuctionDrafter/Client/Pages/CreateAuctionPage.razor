@@ -89,7 +89,8 @@
             // Stream the file content
             var fileContent = new StreamContent(selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)); // Max 10MB file
             fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
-            content.Add(fileContent, "SchoolDataCsv", selectedFile.Name);
+            // The name here ("schoolDataCsvFile") MUST match the parameter name in the controller action
+            content.Add(fileContent, "schoolDataCsvFile", selectedFile.Name);
         }
 
         try
