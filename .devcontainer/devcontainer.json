@@ -1,0 +1,43 @@
+{
+  "name": "Leagify Auction Drafter Codespace",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:8.0",
+  "features": {
+    "ghcr.io/devcontainers/features/dotnet:1": {
+      "version": "8.0"
+    },
+    "ghcr.io/devcontainers/features/azure-cli:1": {},
+    "ghcr.io/devcontainers/features/powershell:1": {}
+  },
+  "forwardPorts": [
+    5000,
+    5001
+  ],
+  "portsAttributes": {
+    "5001": {
+      "label": "Backend HTTPS",
+      "onAutoForward": "openBrowser"
+    },
+    "5000": {
+      "label": "Backend HTTP",
+      "onAutoForward": "silent"
+    }
+  },
+  "postCreateCommand": "dotnet restore Leagify.AuctionDrafter/Leagify.AuctionDrafter.sln",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csharp",
+        "ms-azuretools.vscode-azureappservice",
+        "ms-azuretools.vscode-azuresqlmigration",
+        "ms-azuretools.vscode-azurestaticwebapps",
+        "ms-vscode.azurecli",
+        "Azurite.azurite",
+        "ms-dotnettools.blazorwasm-companion"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "pwsh"
+      }
+    }
+  },
+  "remoteUser": "vscode"
+}

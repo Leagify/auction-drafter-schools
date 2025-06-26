@@ -1,0 +1,132 @@
+@page "/create-auction"
+@using System.Net.Http
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using Leagify.AuctionDrafter.Shared.Models
+@using Leagify.AuctionDrafter.Shared.Dtos
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h3>Create New Auction</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+@if (createdAuction != null)
+{
+    <div class="alert alert-success">
+        Auction "@createdAuction.Name" created successfully with ID: @createdAuction.Id.
+        <p>Number of schools loaded: @(createdAuction.SchoolsAvailable?.Count ?? 0)</p>
+        <button class="btn btn-primary" @onclick="() => NavigateToAuction(createdAuction.Id)">View Auction Details</button>
+    </div>
+}
+
+<EditForm Model="@model" OnValidSubmit="HandleValidSubmitAsync">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="auctionName" class="form-label">Auction Name:</label>
+        <InputText id="auctionName" class="form-control" @bind-Value="model.AuctionName" />
+        <ValidationMessage For="@(() => model.AuctionName)" />
+    </div>
+
+    <div class="mb-3">
+        <label for="schoolDataCsv" class="form-label">School Data CSV:</label>
+        <InputFile id="schoolDataCsv" class="form-control" OnChange="LoadFile" />
+        @if (selectedFile != null)
+        {
+            <p class="mt-1">Selected file: @selectedFile.Name (@selectedFile.Size bytes)</p>
+        }
+    </div>
+
+    <button type="submit" class="btn btn-success" disabled="@isLoading">
+        @if (isLoading)
+        {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span> Creating...</span>
+        }
+        else
+        {
+            <span>Create Auction</span>
+        }
+    </button>
+</EditForm>
+
+@code {
+    private CreateAuctionClientModel model = new CreateAuctionClientModel();
+    private IBrowserFile? selectedFile;
+    private string? errorMessage;
+    private Auction? createdAuction; // Using the main Auction model for response display
+    private bool isLoading = false;
+
+    // Client-specific model for the form binding, especially for InputFile
+    public class CreateAuctionClientModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string AuctionName { get; set; } = "My Awesome Auction";
+        // IBrowserFile is not part of the DTO sent to server, but used by InputFile
+    }
+
+    private void LoadFile(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        // You could add validation here for file type, size etc.
+    }
+
+    private async Task HandleValidSubmitAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+        createdAuction = null;
+
+        using var content = new MultipartFormDataContent();
+        content.Add(new StringContent(model.AuctionName), "AuctionName");
+
+        if (selectedFile != null)
+        {
+            // Stream the file content
+            var fileContent = new StreamContent(selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)); // Max 10MB file
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+            content.Add(fileContent, "SchoolDataCsv", selectedFile.Name);
+        }
+
+        try
+        {
+            var response = await Http.PostAsync("api/auction/create", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                createdAuction = await response.Content.ReadFromJsonAsync<Auction>();
+                // Optionally clear form:
+                // model = new CreateAuctionClientModel();
+                // selectedFile = null;
+                // StateHasChanged();
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"Error creating auction: {response.StatusCode} - {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An unexpected error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToAuction(int auctionId)
+    {
+        // Assuming you'll have a page like "/auction/{auctionId}"
+        // NavigationManager.NavigateTo($"/auction-details/{auctionId}");
+        // For now, just clear the success message or stay on page
+        createdAuction = null;
+        model = new CreateAuctionClientModel();
+        selectedFile = null;
+    }
+}
