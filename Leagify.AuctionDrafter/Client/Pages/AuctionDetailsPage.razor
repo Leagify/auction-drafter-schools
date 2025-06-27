@@ -19,8 +19,11 @@
                 <li>
                     @school.Name (@school.Conference)
                     - Position: @school.LeagifyPosition
-                    - Projected Points: @school.ProjectedPoints?.ToString("N2")
-                    - Suggested Value: @school.SuggestedAuctionValue?.ToString("C")
+                    - Projected Points: @school.ProjectedPoints?.ToString("N0")
+                    @if (school.SuggestedAuctionValue.HasValue)
+                    {
+                        <span>- Suggested Value: @school.SuggestedAuctionValue?.ToString("C")</span>
+                    }
                 </li>
             }
         </ul>
