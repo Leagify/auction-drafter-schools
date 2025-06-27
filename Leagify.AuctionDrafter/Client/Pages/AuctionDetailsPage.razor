@@ -16,7 +16,12 @@
         <ul>
             @foreach (var school in auction.SchoolsAvailable)
             {
-                <li>@school.Name (@school.Conference) - Suggested Value: @school.SuggestedAuctionValue?.ToString("C")</li>
+                <li>
+                    @school.Name (@school.Conference)
+                    - Position: @school.LeagifyPosition
+                    - Projected Points: @school.ProjectedPoints?.ToString("N2")
+                    - Suggested Value: @school.SuggestedAuctionValue?.ToString("C")
+                </li>
             }
         </ul>
     }
