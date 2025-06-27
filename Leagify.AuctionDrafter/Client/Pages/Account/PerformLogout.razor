@@ -1,0 +1,11 @@
+@page "/account/performlogout"
+@inject Leagify.AuctionDrafter.Client.Services.IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthService.LogoutAsync();
+        NavigationManager.NavigateTo("/", forceLoad: true); // Force load to refresh state and ensure cookie is cleared from server perspective for client
+    }
+}

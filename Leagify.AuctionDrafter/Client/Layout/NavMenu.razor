@@ -19,10 +19,61 @@
                 <span class="bi bi-plus-square-dotted-nav-menu" aria-hidden="true"></span> Create Auction
             </NavLink>
         </div>
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="account/logout" @onclick="BeginSignOut">
+                        <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> Logout (@context.User.Identity?.Name)
+                    </NavLink>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="account/register">
+                        <span class="bi bi-person-plus-nav-menu" aria-hidden="true"></span> Register
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="account/login">
+                        <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> Login
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
     </nav>
 </div>
 
 @code {
+    [Inject] NavigationManager NavigationManager { get; set; } = default!;
+    // [Inject] AuthService AuthService { get; set; } = default!; // If direct logout call needed
+
+    private async Task BeginSignOut(MouseEventArgs args)
+    {
+        // This is primarily for server-side cookie clearance.
+        // The client-side state will be updated by PersistentAuthenticationStateProvider
+        // after navigation or if AuthService.LogoutAsync() is called and it notifies the provider.
+        // For simplicity here, we navigate to a conceptual logout initiating page or call an API
+        // then let the auth state provider refresh.
+        // A more direct approach would be to call AuthService.LogoutAsync() here.
+        // For now, let's assume the /account/logout endpoint on server is enough and client state will update.
+
+        // Option 1: Navigate to a page that triggers server logout (if we had one)
+        // NavigationManager.NavigateTo("account/logout", forceLoad: true);
+
+        // Option 2: Call an API endpoint directly via a service (preferred for SPAs usually)
+        // await AuthService.LogoutAsync();
+        // NavigationManager.NavigateTo("/", forceLoad: true); // Or let AuthStateProvider handle UI update
+
+        // Simplest for now: an href to a non-existent page that will be an API call via a form post or JS if we built it that way.
+        // Since we have an API endpoint POST api/account/logout, we'd ideally call that from AuthService.
+        // For a simple NavLink click, we can make it navigate to a page that then calls the logout.
+        // However, NavLink to "account/logout" would be a GET if not handled.
+        // The Logout.razor page is better for this.
+        // For now, let's make this a placeholder or assume a Logout.razor page handles it.
+        // Let's create a Logout.razor page to handle the actual logout process.
+        NavigationManager.NavigateTo("account/performlogout"); // We'll create this page
+    }
     private bool collapseNavMenu = true;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
