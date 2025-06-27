@@ -1,0 +1,85 @@
+@page "/auction-details/{AuctionId:int}"
+@inject NavigationManager NavigationManager
+
+<h3>Auction Details</h3>
+
+@if (auction != null)
+{
+    <p>Displaying details for Auction ID: <strong>@AuctionId</strong></p>
+    <p>Auction Name: <strong>@auction.Name</strong></p>
+    <p>Status: <strong>@auction.Status</strong></p>
+    <p>Created Date: <strong>@auction.CreatedDate.ToShortDateString()</strong></p>
+
+    <h4>Schools (@(auction.SchoolsAvailable?.Count ?? 0) available)</h4>
+    @if (auction.SchoolsAvailable != null && auction.SchoolsAvailable.Any())
+    {
+        <ul>
+            @foreach (var school in auction.SchoolsAvailable)
+            {
+                <li>
+                    @school.Name (@school.Conference)
+                    - Position: @school.LeagifyPosition
+                    - Projected Points: @school.ProjectedPoints?.ToString("N0")
+                    @if (school.SuggestedAuctionValue.HasValue)
+                    {
+                        <span>- Suggested Value: @school.SuggestedAuctionValue?.ToString("C")</span>
+                    }
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p>No schools loaded or available for this auction.</p>
+    }
+}
+else if (isLoading)
+{
+    <p><em>Loading auction details...</em></p>
+}
+else
+{
+    <p><em>Auction not found or error loading details.</em></p>
+}
+
+<button class="btn btn-secondary" @onclick="GoBack">Back to Create Auction</button>
+
+@code {
+    [Parameter]
+    public int AuctionId { get; set; }
+
+    private Shared.Models.Auction? auction; // Using the full Auction model
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    @inject HttpClient Http
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await Http.GetAsync($"api/auction/{AuctionId}");
+            if (response.IsSuccessStatusCode)
+            {
+                auction = await response.Content.ReadFromJsonAsync<Shared.Models.Auction>();
+            }
+            else
+            {
+                errorMessage = $"Error loading auction: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An unexpected error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/create-auction");
+    }
+}
