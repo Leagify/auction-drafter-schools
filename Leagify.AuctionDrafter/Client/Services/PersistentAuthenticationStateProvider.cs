@@ -24,35 +24,40 @@ namespace Leagify.AuctionDrafter.Client.Services
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
+            _logger.LogInformation("PersistentAuthenticationStateProvider: GetAuthenticationStateAsync called.");
             try
             {
-                // Call the server to get current user info.
-                // This relies on the auth cookie being sent automatically by the browser.
+                _logger.LogInformation("PersistentAuthenticationStateProvider: Calling api/account/currentuser.");
                 var response = await _httpClient.GetAsync("api/account/currentuser");
+                _logger.LogInformation("PersistentAuthenticationStateProvider: api/account/currentuser responded with StatusCode {StatusCode}", response.StatusCode);
 
                 if (response.IsSuccessStatusCode)
                 {
                     var authResponse = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
                     if (authResponse != null && authResponse.IsSuccess && authResponse.UserDetails != null)
                     {
+                        _logger.LogInformation("PersistentAuthenticationStateProvider: User details found (Email: {UserEmail}). Creating authenticated principal.", authResponse.UserDetails.Email);
                         var claims = new List<Claim>
                         {
                             new Claim(ClaimTypes.NameIdentifier, authResponse.UserDetails.UserId),
                             new Claim(ClaimTypes.Email, authResponse.UserDetails.Email),
                             new Claim(ClaimTypes.Name, authResponse.UserDetails.Email) // Often email is used as Name claim
-                            // Add other claims like roles if they are part of UserDetailsDto and needed
                         };
                         var identity = new ClaimsIdentity(claims, "serverauth");
                         return new AuthenticationState(new ClaimsPrincipal(identity));
                     }
+                    else
+                    {
+                        _logger.LogInformation("PersistentAuthenticationStateProvider: api/account/currentuser success but no user details in response or authResponse not successful. Returning anonymous.");
+                    }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Handle exceptions (e.g., network error, API down) by returning anonymous state
-                // This could be logged
+                _logger.LogError(ex, "PersistentAuthenticationStateProvider: Exception in GetAuthenticationStateAsync. Returning anonymous.");
             }
 
+            _logger.LogInformation("PersistentAuthenticationStateProvider: Returning anonymous state.");
             return new AuthenticationState(_anonymous); // Not authenticated
         }
 
