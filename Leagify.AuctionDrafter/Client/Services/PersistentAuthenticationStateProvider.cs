@@ -6,16 +6,20 @@ using System.Net.Http.Json;
 using Leagify.AuctionDrafter.Shared.Dtos; // For UserDetailsDto and AuthResponseDto
 using System.Collections.Generic; // For List used in ClaimsIdentity
 
+using Microsoft.Extensions.Logging; // Added for ILogger
+
 namespace Leagify.AuctionDrafter.Client.Services
 {
     public class PersistentAuthenticationStateProvider : AuthenticationStateProvider
     {
         private readonly HttpClient _httpClient;
+        private readonly ILogger<PersistentAuthenticationStateProvider> _logger;
         private static ClaimsPrincipal _anonymous = new ClaimsPrincipal(new ClaimsIdentity());
 
-        public PersistentAuthenticationStateProvider(HttpClient httpClient)
+        public PersistentAuthenticationStateProvider(HttpClient httpClient, ILogger<PersistentAuthenticationStateProvider> logger)
         {
             _httpClient = httpClient;
+            _logger = logger;
         }
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
@@ -68,6 +72,7 @@ namespace Leagify.AuctionDrafter.Client.Services
 
         public void MarkUserAsLoggedOut() // Changed to void
         {
+            _logger.LogInformation("PersistentAuthenticationStateProvider: MarkUserAsLoggedOut called, notifying state change to anonymous.");
             // The server-side logout (api/account/logout) clears the cookie.
             // This method ensures the Blazor client-side state is updated.
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(_anonymous)));

@@ -21,6 +21,7 @@
             Logger.LogWarning("PerformLogout: AuthService.LogoutAsync reported failure: {Message}. Navigating to home anyway.", result.Message);
         }
 
+        await Task.Delay(100); // Small delay to allow UI to process state change
         NavigationManager.NavigateTo("/"); // Removed forceLoad: true
     }
 }
