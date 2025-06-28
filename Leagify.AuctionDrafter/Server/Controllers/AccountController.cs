@@ -111,14 +111,14 @@ namespace Leagify.AuctionDrafter.Server.Controllers
         }
 
         [Authorize] // Requires user to be authenticated
-        [HttpPost("logout")]
+        [HttpGet("logout")] // Changed from HttpPost to HttpGet for diagnostics
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-            _logger.LogInformation("User logged out successfully.");
+            _logger.LogInformation("User logged out successfully (via GET).");
             // For Blazor WASM, the client also needs to clear its state.
             // This endpoint mainly clears the server-side auth cookie.
-            return Ok(new AuthResponseDto { IsSuccess = true, Message = "Logout successful." });
+            return Ok(new AuthResponseDto { IsSuccess = true, Message = "Logout successful (via GET)." });
         }
 
         [Authorize] // Requires user to be authenticated

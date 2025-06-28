@@ -59,11 +59,10 @@ namespace Leagify.AuctionDrafter.Client.Services
         {
             try
             {
-                Console.WriteLine("AuthService.LogoutAsync: Attempting to POST to api/account/logout with explicit empty JSON content.");
-                var emptyJsonContent = new StringContent("", System.Text.Encoding.UTF8, "application/json");
-                var serverResponse = await _httpClient.PostAsync("api/account/logout", emptyJsonContent);
+                Console.WriteLine("AuthService.LogoutAsync: Attempting to GET from api/account/logout.");
+                var serverResponse = await _httpClient.GetAsync("api/account/logout");
 
-                Console.WriteLine($"AuthService.LogoutAsync: Logout API response status: {serverResponse.StatusCode}");
+                Console.WriteLine($"AuthService.LogoutAsync: Logout API (GET) response status: {serverResponse.StatusCode}");
 
                 string rawResponse = await serverResponse.Content.ReadAsStringAsync();
                 Console.WriteLine($"AuthService.LogoutAsync: Logout API raw response: {rawResponse}");
