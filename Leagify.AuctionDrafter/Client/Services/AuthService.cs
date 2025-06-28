@@ -57,6 +57,8 @@ namespace Leagify.AuctionDrafter.Client.Services
 
         public async Task<AuthResponseDto> LogoutAsync()
         {
+            _logger.LogInformation("AuthService.LogoutAsync: Method entered, preparing to call API.");
+            Console.WriteLine("AuthService.LogoutAsync: Method entered, preparing to call API.");
             try
             {
                 Console.WriteLine("AuthService.LogoutAsync: Attempting to GET from api/account/logout.");
