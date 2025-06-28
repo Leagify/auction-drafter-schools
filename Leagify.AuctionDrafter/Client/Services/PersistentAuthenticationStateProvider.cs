@@ -52,7 +52,7 @@ namespace Leagify.AuctionDrafter.Client.Services
             return new AuthenticationState(_anonymous); // Not authenticated
         }
 
-        public async Task MarkUserAsAuthenticated(UserDetailsDto userDetails)
+        public void MarkUserAsAuthenticated(UserDetailsDto userDetails) // Changed to void
         {
             var claims = new List<Claim>
             {
@@ -66,7 +66,7 @@ namespace Leagify.AuctionDrafter.Client.Services
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(principal)));
         }
 
-        public async Task MarkUserAsLoggedOut()
+        public void MarkUserAsLoggedOut() // Changed to void
         {
             // The server-side logout (api/account/logout) clears the cookie.
             // This method ensures the Blazor client-side state is updated.

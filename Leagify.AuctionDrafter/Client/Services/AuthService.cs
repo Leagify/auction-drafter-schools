@@ -46,7 +46,7 @@ namespace Leagify.AuctionDrafter.Client.Services
                 // The actual implementation of how MarkUserAsAuthenticated works will be in PersistentAuthenticationStateProvider
                 if (_authenticationStateProvider is PersistentAuthenticationStateProvider customAuthStateProvider)
                 {
-                    await customAuthStateProvider.MarkUserAsAuthenticated(authResponse.UserDetails);
+                    customAuthStateProvider.MarkUserAsAuthenticated(authResponse.UserDetails); // Removed await
                 }
             }
             return authResponse;
@@ -66,7 +66,7 @@ namespace Leagify.AuctionDrafter.Client.Services
             // Notify the AuthenticationStateProvider for client-side state update
             if (_authenticationStateProvider is PersistentAuthenticationStateProvider customAuthStateProvider)
             {
-                await customAuthStateProvider.MarkUserAsLoggedOut();
+                customAuthStateProvider.MarkUserAsLoggedOut(); // Removed await
             }
             return authResponse;
         }
