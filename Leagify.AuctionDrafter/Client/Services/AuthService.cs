@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization; // Required for AuthenticationStateProvider
+using Microsoft.Extensions.Logging; // Added for ILogger
 
 namespace Leagify.AuctionDrafter.Client.Services
 {
@@ -10,11 +11,13 @@ namespace Leagify.AuctionDrafter.Client.Services
     {
         private readonly HttpClient _httpClient;
         private readonly AuthenticationStateProvider _authenticationStateProvider;
+        private readonly ILogger<AuthService> _logger;
 
-        public AuthService(HttpClient httpClient, AuthenticationStateProvider authenticationStateProvider)
+        public AuthService(HttpClient httpClient, AuthenticationStateProvider authenticationStateProvider, ILogger<AuthService> logger)
         {
             _httpClient = httpClient;
             _authenticationStateProvider = authenticationStateProvider;
+            _logger = logger;
         }
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto registerModel)
@@ -99,11 +102,13 @@ namespace Leagify.AuctionDrafter.Client.Services
             }
             catch (HttpRequestException httpEx)
             {
-                Console.WriteLine($"AuthService.LogoutAsync: HttpRequestException: {httpEx.Message} - Inner: {httpEx.InnerException?.Message}");
+                _logger.LogError(httpEx, "AuthService.LogoutAsync: HttpRequestException encountered. Message: {ExceptionMessage}, InnerException: {InnerExceptionMessage}", httpEx.Message, httpEx.InnerException?.Message);
+                Console.WriteLine($"AuthService.LogoutAsync: HttpRequestException: {httpEx.Message} - Inner: {httpEx.InnerException?.Message}"); // Keep for direct console visibility too
                 return new AuthResponseDto { IsSuccess = false, Message = "Network error during logout." };
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "AuthService.LogoutAsync: General exception encountered.");
                 Console.WriteLine($"AuthService.LogoutAsync: General exception: {ex.ToString()}"); // Log full exception details
                 return new AuthResponseDto { IsSuccess = false, Message = "An unexpected error occurred during logout." };
             }
