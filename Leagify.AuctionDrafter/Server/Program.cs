@@ -49,6 +49,34 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     .AddEntityFrameworkStores<ApplicationIdentityDbContext>()
     .AddDefaultTokenProviders(); // For password reset, email confirmation tokens etc.
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Events.OnRedirectToLogin = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        }
+        else
+        {
+            context.Response.Redirect(context.RedirectUri);
+        }
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        }
+        else
+        {
+            context.Response.Redirect(context.RedirectUri);
+        }
+        return Task.CompletedTask;
+    };
+});
+
 // Swagger/OpenAPI (optional, keep if API exploration is desired)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
