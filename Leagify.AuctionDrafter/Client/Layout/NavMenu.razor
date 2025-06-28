@@ -48,7 +48,7 @@
     [Inject] NavigationManager NavigationManager { get; set; } = default!;
     // [Inject] AuthService AuthService { get; set; } = default!; // If direct logout call needed
 
-    private async Task BeginSignOut(MouseEventArgs args)
+    private void BeginSignOut(MouseEventArgs args) // Changed from async Task to void
     {
         // This is primarily for server-side cookie clearance.
         // The client-side state will be updated by PersistentAuthenticationStateProvider
