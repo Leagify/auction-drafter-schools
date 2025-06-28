@@ -1,11 +1,26 @@
 @page "/account/performlogout"
+@using Microsoft.Extensions.Logging
 @inject Leagify.AuctionDrafter.Client.Services.IAuthService AuthService
 @inject NavigationManager NavigationManager
+@inject ILogger<PerformLogout> Logger
+
+<p>Logging out...</p>
 
 @code {
     protected override async Task OnInitializedAsync()
     {
-        await AuthService.LogoutAsync();
+        Logger.LogInformation("PerformLogout: Initialized. Attempting to logout via AuthService.");
+        var result = await AuthService.LogoutAsync();
+
+        if (result.IsSuccess)
+        {
+            Logger.LogInformation("PerformLogout: AuthService.LogoutAsync reported success. Navigating to home.");
+        }
+        else
+        {
+            Logger.LogWarning("PerformLogout: AuthService.LogoutAsync reported failure: {Message}. Navigating to home anyway.", result.Message);
+        }
+
         NavigationManager.NavigateTo("/"); // Removed forceLoad: true
     }
 }

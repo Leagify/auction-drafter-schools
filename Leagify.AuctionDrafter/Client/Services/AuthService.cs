@@ -54,21 +54,59 @@ namespace Leagify.AuctionDrafter.Client.Services
 
         public async Task<AuthResponseDto> LogoutAsync()
         {
-            // Call the server-side logout to clear the auth cookie
-            var serverResponse = await _httpClient.PostAsync("api/account/logout", null);
-            var authResponse = await serverResponse.Content.ReadFromJsonAsync<AuthResponseDto>();
-
-            if (authResponse == null)
+            try
             {
-                 return new AuthResponseDto { IsSuccess = false, Message = "Failed to process logout response." };
-            }
+                Console.WriteLine("AuthService.LogoutAsync: Attempting to POST to api/account/logout");
+                var serverResponse = await _httpClient.PostAsync("api/account/logout", null);
 
-            // Notify the AuthenticationStateProvider for client-side state update
-            if (_authenticationStateProvider is PersistentAuthenticationStateProvider customAuthStateProvider)
-            {
-                customAuthStateProvider.MarkUserAsLoggedOut(); // Removed await
+                Console.WriteLine($"AuthService.LogoutAsync: Logout API response status: {serverResponse.StatusCode}");
+
+                string rawResponse = await serverResponse.Content.ReadAsStringAsync();
+                Console.WriteLine($"AuthService.LogoutAsync: Logout API raw response: {rawResponse}");
+
+                if (serverResponse.IsSuccessStatusCode)
+                {
+                    AuthResponseDto? authResponse = null;
+                    try
+                    {
+                        // Ensure System.Text.Json.JsonSerializerOptions if needed, but default should work for simple DTOs
+                        authResponse = System.Text.Json.JsonSerializer.Deserialize<AuthResponseDto>(rawResponse, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    }
+                    catch (System.Text.Json.JsonException jsonEx)
+                    {
+                        Console.WriteLine($"AuthService.LogoutAsync: Logout API JSON deserialization error: {jsonEx.Message}");
+                        return new AuthResponseDto { IsSuccess = false, Message = "Failed to parse logout server response." };
+                    }
+
+                    if (authResponse == null)
+                    {
+                        Console.WriteLine("AuthService.LogoutAsync: Deserialized authResponse is null.");
+                        return new AuthResponseDto { IsSuccess = false, Message = "Failed to process logout response (null after deserialize)." };
+                    }
+
+                    if (_authenticationStateProvider is PersistentAuthenticationStateProvider customAuthStateProvider)
+                    {
+                        customAuthStateProvider.MarkUserAsLoggedOut();
+                    }
+                    Console.WriteLine("AuthService.LogoutAsync: Successfully processed logout and notified auth provider.");
+                    return authResponse;
+                }
+                else
+                {
+                    Console.WriteLine($"AuthService.LogoutAsync: Logout API returned non-success status: {serverResponse.StatusCode}. Response: {rawResponse}");
+                    return new AuthResponseDto { IsSuccess = false, Message = $"Logout failed on server: {serverResponse.StatusCode}" };
+                }
             }
-            return authResponse;
+            catch (HttpRequestException httpEx)
+            {
+                Console.WriteLine($"AuthService.LogoutAsync: HttpRequestException: {httpEx.Message} - Inner: {httpEx.InnerException?.Message}");
+                return new AuthResponseDto { IsSuccess = false, Message = "Network error during logout." };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"AuthService.LogoutAsync: General exception: {ex.ToString()}"); // Log full exception details
+                return new AuthResponseDto { IsSuccess = false, Message = "An unexpected error occurred during logout." };
+            }
         }
 
         public async Task<UserDetailsDto?> GetCurrentUserAsync()
