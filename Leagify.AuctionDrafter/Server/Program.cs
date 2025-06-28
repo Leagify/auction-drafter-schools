@@ -7,6 +7,26 @@ using Microsoft.AspNetCore.Builder; // Added for WebApplication extension method
 
 var builder = WebApplication.CreateBuilder(args);
 
+var DefaultCorsPolicy = "_defaultCorsPolicy";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: DefaultCorsPolicy,
+                      policy =>
+                      {
+                          // For development, allowing the app's own base address.
+                          // In production, you might list specific domains or be more restrictive.
+                          // Using builder.HostEnvironment.BaseAddress might be problematic if it's not what the browser perceives as the origin.
+                          // For Codespaces, the forwarded public URL is the client origin.
+                          // Allowing any origin with credentials is a security risk for production.
+                          // For now, let's try allowing any origin for diagnostics, then refine.
+                          policy.AllowAnyOrigin() // TEMPORARY for diagnostics - will refine
+                                .AllowAnyHeader()
+                                .AllowAnyMethod()
+                                .AllowCredentials();
+                      });
+});
+
 // Add services to the container.
 builder.Services.AddControllersWithViews(); // For API controllers
 builder.Services.AddRazorPages(); // For Blazor hosting support & Identity UI
@@ -76,6 +96,9 @@ app.UseHttpsRedirection();
 
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
+
+// Apply the CORS policy. IMPORTANT: This should generally be before UseRouting, UseAuthentication, UseAuthorization.
+app.UseCors(DefaultCorsPolicy);
 
 app.UseRouting();
 
