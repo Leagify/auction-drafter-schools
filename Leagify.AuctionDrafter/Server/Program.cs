@@ -19,8 +19,8 @@ builder.Services.AddCors(options =>
                           // Using builder.HostEnvironment.BaseAddress might be problematic if it's not what the browser perceives as the origin.
                           // For Codespaces, the forwarded public URL is the client origin.
                           // Allowing any origin with credentials is a security risk for production.
-                          // For now, let's try allowing any origin for diagnostics, then refine.
-                          policy.AllowAnyOrigin() // TEMPORARY for diagnostics - will refine
+                          // SetIsOriginAllowed(_ => true) allows any origin but is compatible with AllowCredentials.
+                          policy.SetIsOriginAllowed(_ => true) // Allows any origin, for dev/testing with credentials
                                 .AllowAnyHeader()
                                 .AllowAnyMethod()
                                 .AllowCredentials();
