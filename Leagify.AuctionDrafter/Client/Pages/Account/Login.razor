@@ -31,6 +31,17 @@
         <NavLink href="account/register">Don't have an account? Register here.</NavLink>
     </p>
 
+    <hr />
+    <h5>Or login with:</h5>
+    <p>
+        <a href="api/account/signin/Google" class="btn btn-outline-danger">
+            <span class="bi bi-google me-2"></span> Login with Google
+        </a>
+        <!-- Add other providers here if needed -->
+    </p>
+    <hr />
+
+
     <button type="submit" class="btn btn-primary" disabled="@isLoading">
         @if (isLoading)
         {

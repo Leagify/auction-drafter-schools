@@ -49,6 +49,15 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     .AddEntityFrameworkStores<ApplicationIdentityDbContext>()
     .AddDefaultTokenProviders(); // For password reset, email confirmation tokens etc.
 
+builder.Services.AddAuthentication() // Ensure Authentication services are registered
+    .AddGoogle(options =>
+    {
+        options.ClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID") ?? "YOUR_GOOGLE_CLIENT_ID";
+        options.ClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET") ?? "YOUR_GOOGLE_CLIENT_SECRET";
+        // The default callback path is /signin-google. If you change it here, change it in Google Console too.
+        // options.CallbackPath = "/your-custom-signin-google";
+    });
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Events.OnRedirectToLogin = context =>

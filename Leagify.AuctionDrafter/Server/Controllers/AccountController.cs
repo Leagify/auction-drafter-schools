@@ -5,6 +5,7 @@ using Leagify.AuctionDrafter.Shared.Dtos;
 using Leagify.AuctionDrafter.Server.Data; // For ApplicationUser
 using System.Threading.Tasks;
 using System.Linq; // Required for Select in GetCurrentUser
+using System.Security.Claims; // Required for ClaimTypes
 
 namespace Leagify.AuctionDrafter.Server.Controllers
 {
@@ -139,6 +140,103 @@ namespace Leagify.AuctionDrafter.Server.Controllers
                 Message = "User details retrieved.",
                 UserDetails = new UserDetailsDto { UserId = user.Id, Email = user.Email ?? "N/A" }
             });
+        }
+
+        // Initiates the external login flow (e.g., redirect to Google)
+        // The 'provider' will be "Google"
+        [HttpGet("signin/{provider}")]
+        [AllowAnonymous] // This endpoint itself doesn't require auth, it starts the auth flow
+        public IActionResult SignIn(string provider, string? returnUrl = null)
+        {
+            _logger.LogInformation("Attempting to sign in with provider: {Provider}, returnUrl: {ReturnUrl}", provider, returnUrl);
+            // Request a redirect to the external login provider.
+            // The redirect URL will be this controller's ExternalLoginCallback action.
+            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { returnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            return Challenge(properties, provider);
+        }
+
+        // Handles the callback from the external login provider (e.g., Google)
+        [HttpGet("externallogincallback")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null)
+        {
+            returnUrl = returnUrl ?? Url.Content("~/"); // Default to home page
+            if (remoteError != null)
+            {
+                _logger.LogError("Error from external provider: {RemoteError}", remoteError);
+                // Redirect to a login failure page or display error on login page
+                // For Blazor WASM, redirecting back to a client route that can show error is good.
+                return Redirect($"/account/login?message=Error from external provider: {remoteError}");
+            }
+
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+            if (info == null)
+            {
+                _logger.LogWarning("Error loading external login information.");
+                return Redirect($"/account/login?message=Error loading external login information.");
+            }
+
+            _logger.LogInformation("External login info received for {LoginProvider}, ProviderKey: {ProviderKey}", info.LoginProvider, info.ProviderKey);
+
+            // Sign in the user with this external login provider if the user already has a login.
+            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: true, bypassTwoFactor: true);
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("User {UserEmail} logged in with {LoginProvider} provider.", info.Principal.FindFirstValue(ClaimTypes.Email), info.LoginProvider);
+                return LocalRedirect(returnUrl);
+            }
+            if (result.IsLockedOut)
+            {
+                _logger.LogWarning("User account locked out.");
+                return Redirect("/account/lockout"); // Placeholder, create this page if needed
+            }
+            else
+            {
+                // If the user does not have an account, then ask the user to create an account.
+                _logger.LogInformation("User does not have a local account. Attempting to create one for {UserEmail} from {LoginProvider}.", info.Principal.FindFirstValue(ClaimTypes.Email), info.LoginProvider);
+
+                var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+                if (email == null)
+                {
+                    _logger.LogError("Email claim not received from external provider {LoginProvider}.", info.LoginProvider);
+                    // You might redirect to a page where they can manually enter an email if this happens
+                    return Redirect($"/account/login?message=Email claim not received from {info.LoginProvider}.");
+                }
+
+                var user = await _userManager.FindByEmailAsync(email);
+                if (user == null)
+                {
+                    user = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true }; // Assume email is confirmed by Google
+                    var createUserResult = await _userManager.CreateAsync(user);
+                    if (!createUserResult.Succeeded)
+                    {
+                        var errors = string.Join(", ", createUserResult.Errors.Select(e => e.Description));
+                        _logger.LogError("Error creating new user {UserEmail}: {Errors}", email, errors);
+                        return Redirect($"/account/login?message=Error creating user: {errors}");
+                    }
+                    _logger.LogInformation("New user {UserEmail} created.", email);
+                }
+                else
+                {
+                     _logger.LogInformation("User {UserEmail} already exists locally. Linking external login.", email);
+                }
+
+                var addLoginResult = await _userManager.AddLoginAsync(user, info);
+                if (!addLoginResult.Succeeded)
+                {
+                    var errors = string.Join(", ", addLoginResult.Errors.Select(e => e.Description));
+                    _logger.LogError("Error adding external login for user {UserEmail}: {Errors}", email, errors);
+                    return Redirect($"/account/login?message=Error linking external login: {errors}");
+                }
+                _logger.LogInformation("External login linked for user {UserEmail}.", email);
+
+                // Re-attempt sign-in now that the user and external login are linked
+                await _signInManager.SignInAsync(user, isPersistent: true); // Sign in the newly created/linked user
+                 _logger.LogInformation("User {UserEmail} signed in after creating/linking external login.", email);
+
+                return LocalRedirect(returnUrl);
+            }
         }
     }
 }
