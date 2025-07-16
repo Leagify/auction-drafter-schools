@@ -15,12 +15,10 @@ namespace Leagify.AuctionDrafter.Shared.Models
     {
         public int Id { get; set; }
         public string? Name { get; set; }
+        public string JoinCode { get; set; } = string.Empty;
+        public string HashedMasterToken { get; set; } = string.Empty;
         public DateTime CreatedDate { get; set; }
         public AuctionStatus Status { get; set; }
-
-        // Foreign Key for the Auction Master (User)
-        public int AuctionMasterUserId { get; set; }
-        public virtual User? AuctionMaster { get; set; }
 
         // All schools available in this auction (copied from a template or master list)
         public virtual ICollection<School>? SchoolsAvailable { get; set; }

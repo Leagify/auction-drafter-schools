@@ -6,6 +6,7 @@
 @using Leagify.AuctionDrafter.Shared.Dtos
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
 <h3>Create New Auction</h3>
 
@@ -13,12 +14,15 @@
 {
     <div class="alert alert-danger">@errorMessage</div>
 }
-@if (createdAuction != null)
+@if (createdAuctionResponse != null)
 {
     <div class="alert alert-success">
-        Auction "@createdAuction.Name" created successfully with ID: @createdAuction.Id.
-        <p>Number of schools loaded: @(createdAuction.SchoolsAvailable?.Count ?? 0)</p>
-        <button class="btn btn-primary" @onclick="() => NavigateToAuction(createdAuction.Id)">View Auction Details</button>
+        <p>Auction "@createdAuctionResponse.AuctionName" created successfully!</p>
+        <p><strong>Join Code:</strong> <span style="font-family: monospace; font-size: 1.2rem; background-color: #eee; padding: 2px 5px; border-radius: 4px;">@createdAuctionResponse.JoinCode</span></p>
+        <p><small>(Share this code with other participants)</small></p>
+        <p>
+            <button class="btn btn-primary" @onclick="() => NavigateToAuction(createdAuctionResponse.AuctionId)">Go to Auction Management Page</button>
+        </p>
     </div>
 }
 
@@ -58,7 +62,7 @@
     private CreateAuctionClientModel model = new CreateAuctionClientModel();
     private IBrowserFile? selectedFile;
     private string? errorMessage;
-    private Auction? createdAuction; // Using the main Auction model for response display
+    private CreateAuctionResponseDto? createdAuctionResponse;
     private bool isLoading = false;
 
     // Client-specific model for the form binding, especially for InputFile
@@ -79,17 +83,15 @@
     {
         isLoading = true;
         errorMessage = null;
-        createdAuction = null;
+        createdAuctionResponse = null;
 
         using var content = new MultipartFormDataContent();
         content.Add(new StringContent(model.AuctionName), "AuctionName");
 
         if (selectedFile != null)
         {
-            // Stream the file content
             var fileContent = new StreamContent(selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)); // Max 10MB file
             fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
-            // The name here ("schoolDataCsvFile") MUST match the parameter name in the controller action
             content.Add(fileContent, "schoolDataCsvFile", selectedFile.Name);
         }
 
@@ -99,11 +101,16 @@
 
             if (response.IsSuccessStatusCode)
             {
-                createdAuction = await response.Content.ReadFromJsonAsync<Auction>();
-                // Optionally clear form:
-                // model = new CreateAuctionClientModel();
-                // selectedFile = null;
-                // StateHasChanged();
+                createdAuctionResponse = await response.Content.ReadFromJsonAsync<CreateAuctionResponseDto>();
+                if (createdAuctionResponse != null)
+                {
+                    // Store the master token in local storage
+                    var masterKey = $"auctionMasterToken_{createdAuctionResponse.AuctionId}";
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", masterKey, createdAuctionResponse.MasterToken);
+
+                    // Don't navigate away immediately, show the success message with the Join Code.
+                    // The user will click the button to navigate.
+                }
             }
             else
             {
@@ -123,11 +130,7 @@
 
     private void NavigateToAuction(int auctionId)
     {
-        // Assuming you'll have a page like "/auction/{auctionId}"
+        // Navigate to the management/details page for the auction
         NavigationManager.NavigateTo($"/auction-details/{auctionId}");
-        // For now, just clear the success message or stay on page
-        createdAuction = null;
-        model = new CreateAuctionClientModel();
-        selectedFile = null;
     }
 }

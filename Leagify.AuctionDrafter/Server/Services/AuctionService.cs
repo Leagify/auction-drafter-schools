@@ -4,12 +4,15 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Leagify.AuctionDrafter.Shared.Models;
+using Leagify.AuctionDrafter.Shared.Dtos;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Leagify.AuctionDrafter.Server.Services
 {
     public interface IAuctionService
     {
-        Task<Auction> CreateAuctionAsync(string auctionName, int auctionMasterUserId, Stream? schoolDataCsvStream);
+        Task<CreateAuctionResponseDto> CreateAuctionAsync(string auctionName, Stream? schoolDataCsvStream);
         Task<Auction?> GetAuctionByIdAsync(int auctionId);
         Task<List<School>> GetSchoolsForAuctionAsync(int auctionId);
         // Add more methods as needed: UpdateAuction, AddTeamToAuction, etc.
@@ -29,16 +32,20 @@ namespace Leagify.AuctionDrafter.Server.Services
             _logger = logger;
         }
 
-        public async Task<Auction> CreateAuctionAsync(string auctionName, int auctionMasterUserId, Stream? schoolDataCsvStream)
+        public async Task<CreateAuctionResponseDto> CreateAuctionAsync(string auctionName, Stream? schoolDataCsvStream)
         {
+            var masterToken = Guid.NewGuid().ToString();
+            var joinCode = GenerateJoinCode();
+            var hashedMasterToken = HashToken(masterToken);
+
             var auction = new Auction
             {
                 Id = _nextAuctionId++,
                 Name = auctionName,
-                AuctionMasterUserId = auctionMasterUserId, // Assuming User ID 1 is a valid master for now
+                JoinCode = joinCode,
+                HashedMasterToken = hashedMasterToken,
                 Status = AuctionStatus.NotStarted,
-                CreatedDate = DateTime.UtcNow,
-                SchoolsAvailable = new List<School>()
+                CreatedDate = DateTime.UtcNow
             };
 
             if (schoolDataCsvStream != null)
@@ -47,14 +54,10 @@ namespace Leagify.AuctionDrafter.Server.Services
                 var schools = await _csvParsingService.ParseSchoolsFromCsvAsync(schoolDataCsvStream);
                 _logger.LogInformation("Parsed {SchoolCount} schools from CSV for auction {AuctionName}.", schools.Count, auctionName);
 
-                // In a real DB scenario, these schools would be linked to this auction.
-                // For in-memory, we can add them to the auction's collection.
-                // We might also want to assign new IDs to these schools if they are specific to this auction instance.
                 int schoolIdCounter = 1;
                 foreach (var school in schools)
                 {
                     school.Id = schoolIdCounter++; // Assign a temporary ID for this auction context
-                    // school.AuctionId = auction.Id; // If School model had AuctionId
                 }
                 auction.SchoolsAvailable = schools;
                 _logger.LogInformation("Assigned {SchoolCount} schools to auction {AuctionName}.", auction.SchoolsAvailable.Count, auctionName);
@@ -65,8 +68,32 @@ namespace Leagify.AuctionDrafter.Server.Services
             }
 
             _auctions.Add(auction);
-            _logger.LogInformation("Auction {AuctionName} created with ID {AuctionId} and {SchoolCount} schools.", auction.Name, auction.Id, auction.SchoolsAvailable.Count);
-            return auction;
+            _logger.LogInformation("Auction {AuctionName} created with ID {AuctionId}, JoinCode {JoinCode} and {SchoolCount} schools.", auction.Name, auction.Id, auction.JoinCode, auction.SchoolsAvailable.Count);
+
+            return new CreateAuctionResponseDto
+            {
+                AuctionId = auction.Id,
+                AuctionName = auction.Name,
+                JoinCode = auction.JoinCode,
+                MasterToken = masterToken // Return the un-hashed token to the creator
+            };
+        }
+
+        private string GenerateJoinCode(int length = 6)
+        {
+            const string chars = "ABCDEFGHIJKLMNPQRSTUVWXYZ123456789"; // Omitted O and 0 for clarity
+            var random = new Random();
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        private string HashToken(string token)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(token));
+                return Convert.ToBase64String(hashedBytes);
+            }
         }
 
         public Task<Auction?> GetAuctionByIdAsync(int auctionId)

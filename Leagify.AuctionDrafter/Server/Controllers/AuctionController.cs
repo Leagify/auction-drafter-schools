@@ -20,8 +20,6 @@ namespace Leagify.AuctionDrafter.Server.Controllers
         }
 
         // POST: api/auction/create
-        // AuctionName comes from the DTO, SchoolDataCsv comes as a separate IFormFile parameter
-        // And user authentication to get auctionMasterUserId
         [HttpPost("create")]
         public async Task<IActionResult> CreateAuction([FromForm] CreateAuctionDto auctionDetails, IFormFile? schoolDataCsvFile)
         {
@@ -29,10 +27,6 @@ namespace Leagify.AuctionDrafter.Server.Controllers
             {
                 return BadRequest("Auction details are null.");
             }
-
-            // schoolDataCsvFile is now a direct parameter, can be null if no file uploaded.
-            // The client UI should ideally enforce that a file is selected if it's mandatory.
-            // For now, service handles null stream.
 
             Stream? csvStream = null;
             if (schoolDataCsvFile != null)
@@ -44,14 +38,10 @@ namespace Leagify.AuctionDrafter.Server.Controllers
                 csvStream = schoolDataCsvFile.OpenReadStream();
             }
 
-            // TODO: Get auctionMasterUserId from authenticated user context later
-            var auctionMasterUserId = 1; // Placeholder
-
             try
             {
-                var auction = await _auctionService.CreateAuctionAsync(
+                var responseDto = await _auctionService.CreateAuctionAsync(
                     auctionDetails.AuctionName ?? "Unnamed Auction",
-                    auctionMasterUserId,
                     csvStream);
 
                 if (csvStream != null)
@@ -59,8 +49,8 @@ namespace Leagify.AuctionDrafter.Server.Controllers
                     await csvStream.DisposeAsync();
                 }
 
-                // Return a more detailed Auction DTO if needed
-                return CreatedAtAction(nameof(GetAuction), new { auctionId = auction.Id }, auction);
+                // Return the response DTO which includes the MasterToken for the creator
+                return CreatedAtAction(nameof(GetAuction), new { auctionId = responseDto.AuctionId }, responseDto);
             }
             catch (System.Exception ex)
             {
