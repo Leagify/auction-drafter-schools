@@ -12,7 +12,7 @@ The goal is for this repository will be a Blazor WASM (Webassembly) C# SignalR w
   - Team coach. They can bid for a school for their team and assign it to a position on their roster
   - Auction viewer. They can view the auction.
   - Proxy coach. They can bid on behalf of a a team coach who is not present for the auction but would like to have a team.
-+ Once an auction master creates a draft, other users can choose to join a draft as team coach.
++ An auction master creates a draft, other users can choose to join a draft as team coach via a "join code". The auction master assigns users that join into roles.
 + A user can be both a team coach and proxy coach.  They can bid as both coaches in the same auction. In that case, the bidding would be handled via a dropdown menu or some other easily selectable means.
 + The auction can be viewed by anyone.
 
@@ -29,7 +29,6 @@ The goal is for this repository will be a Blazor WASM (Webassembly) C# SignalR w
 | View All Rosters & Budgets   |       ✅       |     ✅     |      ✅     |       ✅       |
 | Download Final Results       |       ✅       |     ✅     |      ✅     |       ✅       |
 
-+ It would be nice if you could log in using Google Auth to make an account. 
 
 + Team coaches pick from a "draft board".
 + At this time, the draft board loads information from a CSV draft template file uploaded by the auction master.  The format of the draft template is similar to the template at the root of this repo, named "SampleDraftTemplate.csv"
