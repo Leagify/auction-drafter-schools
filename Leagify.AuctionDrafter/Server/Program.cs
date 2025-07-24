@@ -35,7 +35,8 @@ builder.Services.AddSwaggerGen();
 
 // Register custom application services
 builder.Services.AddSingleton<ICsvParsingService, CsvParsingService>(); // Changed from Scoped to Singleton
-builder.Services.AddSingleton<IAuctionService, AuctionService>(); // Singleton for in-memory auction data
+builder.Services.AddSingleton<IAuctionService, AuctionService>(); // Singleton for in--memory auction data
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -85,6 +86,7 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapControllers();
+app.MapHub<AuctionHub>("/auctionhub");
 app.MapFallbackToFile("index.html");
 
 app.Run();

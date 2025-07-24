@@ -13,14 +13,6 @@
 {
     <div class="alert alert-danger">@errorMessage</div>
 }
-@if (createdAuction != null)
-{
-    <div class="alert alert-success">
-        Auction "@createdAuction.Name" created successfully with ID: @createdAuction.Id.
-        <p>Number of schools loaded: @(createdAuction.SchoolsAvailable?.Count ?? 0)</p>
-        <button class="btn btn-primary" @onclick="() => NavigateToAuction(createdAuction.Id)">View Auction Details</button>
-    </div>
-}
 
 <EditForm Model="@model" OnValidSubmit="HandleValidSubmitAsync">
     <DataAnnotationsValidator />
@@ -100,10 +92,7 @@
             if (response.IsSuccessStatusCode)
             {
                 createdAuction = await response.Content.ReadFromJsonAsync<Auction>();
-                // Optionally clear form:
-                // model = new CreateAuctionClientModel();
-                // selectedFile = null;
-                // StateHasChanged();
+                NavigationManager.NavigateTo($"/auction/{createdAuction.Id}/waiting");
             }
             else
             {
@@ -121,13 +110,4 @@
         }
     }
 
-    private void NavigateToAuction(int auctionId)
-    {
-        // Assuming you'll have a page like "/auction/{auctionId}"
-        NavigationManager.NavigateTo($"/auction-details/{auctionId}");
-        // For now, just clear the success message or stay on page
-        createdAuction = null;
-        model = new CreateAuctionClientModel();
-        selectedFile = null;
-    }
 }
