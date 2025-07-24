@@ -92,7 +92,10 @@
             if (response.IsSuccessStatusCode)
             {
                 createdAuction = await response.Content.ReadFromJsonAsync<Auction>();
-                NavigationManager.NavigateTo($"/auction/{createdAuction.Id}/waiting");
+                if (createdAuction != null)
+                {
+                    NavigationManager.NavigateTo($"/auction/{createdAuction.Id}/waiting");
+                }
             }
             else
             {
