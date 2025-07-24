@@ -20,10 +20,10 @@ else
         @foreach (var user in _participants)
         {
             <li>
-                @user.Name
+                @user.DisplayName
                 @if (IsAuctionMaster)
                 {
-                    <select @onchange="(e) => AssignRole(user, e.Value.ToString())">
+                    <select @onchange="(e) => AssignRole(user, e.Value!.ToString())">
                         <option value="">Assign Role</option>
                         @foreach (var role in Enum.GetValues(typeof(Role)))
                         {
@@ -45,15 +45,20 @@ else
     [Parameter]
     public int AuctionId { get; set; }
 
-    private Auction _auction;
+    private Auction? _auction;
     private List<User> _participants = new List<User>();
-    private HubConnection _hubConnection;
+    private HubConnection? _hubConnection;
 
     public bool IsAuctionMaster { get; set; } // This will be set based on the user's context
 
     protected override async Task OnInitializedAsync()
     {
         _auction = await Http.GetFromJsonAsync<Auction>($"api/auction/{AuctionId}");
+
+        if (_auction != null)
+        {
+            _participants.AddRange(_auction.Participants ?? new List<User>());
+        }
 
         _hubConnection = new HubConnectionBuilder()
             .WithUrl(NavigationManager.ToAbsoluteUri("/auctionhub"))
@@ -68,7 +73,7 @@ else
         _hubConnection.On<int, Role>("RoleAssigned", (userId, role) =>
         {
             var user = _participants.First(u => u.Id == userId);
-            user.Role = role;
+            user.Roles?.Add(role);
             StateHasChanged();
         });
 
@@ -84,7 +89,7 @@ else
     {
         if (Enum.TryParse<Role>(roleStr, out var role))
         {
-            await Http.PostAsJsonAsync($"api/auction/{AuctionId}/assignrole", new { UserId = user.Id, Role = role });
+            await Http.PostAsJsonAsync($"api/auction/{AuctionId}/assignrole", new { UserId = user.Id, Role = (Role?)role });
         }
     }
 
