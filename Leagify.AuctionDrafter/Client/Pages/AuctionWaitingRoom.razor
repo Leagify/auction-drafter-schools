@@ -1,0 +1,103 @@
+@page "/auction/{AuctionId:int}/waiting"
+@using Leagify.AuctionDrafter.Shared.Models
+@using Microsoft.AspNetCore.SignalR.Client
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h3>Auction Waiting Room</h3>
+
+@if (_auction == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <h4>Auction: @_auction.Name</h4>
+    <p>Join Code: @_auction.JoinCode</p>
+
+    <h5>Participants</h5>
+    <ul>
+        @foreach (var user in _participants)
+        {
+            <li>
+                @user.Name
+                @if (IsAuctionMaster)
+                {
+                    <select @onchange="(e) => AssignRole(user, e.Value.ToString())">
+                        <option value="">Assign Role</option>
+                        @foreach (var role in Enum.GetValues(typeof(Role)))
+                        {
+                            <option value="@role">@role</option>
+                        }
+                    </select>
+                }
+            </li>
+        }
+    </ul>
+
+    @if (IsAuctionMaster)
+    {
+        <button @onclick="StartAuction">Start Auction</button>
+    }
+}
+
+@code {
+    [Parameter]
+    public int AuctionId { get; set; }
+
+    private Auction _auction;
+    private List<User> _participants = new List<User>();
+    private HubConnection _hubConnection;
+
+    public bool IsAuctionMaster { get; set; } // This will be set based on the user's context
+
+    protected override async Task OnInitializedAsync()
+    {
+        _auction = await Http.GetFromJsonAsync<Auction>($"api/auction/{AuctionId}");
+
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/auctionhub"))
+            .Build();
+
+        _hubConnection.On<User>("UserJoined", (user) =>
+        {
+            _participants.Add(user);
+            StateHasChanged();
+        });
+
+        _hubConnection.On<int, Role>("RoleAssigned", (userId, role) =>
+        {
+            var user = _participants.First(u => u.Id == userId);
+            user.Role = role;
+            StateHasChanged();
+        });
+
+        await _hubConnection.StartAsync();
+        await _hubConnection.SendAsync("AddToGroup", AuctionId.ToString());
+
+        // For demonstration, assuming the creator is the auction master.
+        // In a real app, you'd have a more robust way of determining this.
+        IsAuctionMaster = true;
+    }
+
+    private async Task AssignRole(User user, string roleStr)
+    {
+        if (Enum.TryParse<Role>(roleStr, out var role))
+        {
+            await Http.PostAsJsonAsync($"api/auction/{AuctionId}/assignrole", new { UserId = user.Id, Role = role });
+        }
+    }
+
+    private void StartAuction()
+    {
+        NavigationManager.NavigateTo($"/auction/{AuctionId}");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hubConnection is not null)
+        {
+            await _hubConnection.DisposeAsync();
+        }
+    }
+}

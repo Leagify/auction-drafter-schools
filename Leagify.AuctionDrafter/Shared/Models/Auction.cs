@@ -28,6 +28,11 @@ namespace Leagify.AuctionDrafter.Shared.Models
         // Teams participating in this auction
         public virtual ICollection<Team>? Teams { get; set; }
 
+        // Users participating in this auction
+        public virtual ICollection<User>? Participants { get; set; }
+
+        public string? JoinCode { get; set; }
+
         // Roster Design for this auction
         public virtual RosterDesign? RosterDesign { get; set; }
         public int? RosterDesignId { get; set; }
@@ -46,6 +51,7 @@ namespace Leagify.AuctionDrafter.Shared.Models
             Status = AuctionStatus.NotStarted;
             SchoolsAvailable = new HashSet<School>();
             Teams = new HashSet<Team>();
+            Participants = new HashSet<User>();
         }
     }
 }

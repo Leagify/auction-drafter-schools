@@ -100,5 +100,26 @@ namespace Leagify.AuctionDrafter.Server.Controllers
             }
             return Ok(schools);
         }
+
+        // POST: api/auction/{auctionId}/assignrole
+        [HttpPost("{auctionId}/assignrole")]
+        public async Task<IActionResult> AssignRole(int auctionId, [FromBody] AssignRoleDto assignRoleDto)
+        {
+            if (assignRoleDto == null)
+            {
+                return BadRequest("Assign role details are null.");
+            }
+
+            try
+            {
+                await _auctionService.AssignRoleAsync(auctionId, assignRoleDto.UserId, assignRoleDto.Role);
+                return Ok();
+            }
+            catch (System.Exception ex)
+            {
+                // Log the exception ex
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error assigning role: {ex.Message}");
+            }
+        }
     }
 }
