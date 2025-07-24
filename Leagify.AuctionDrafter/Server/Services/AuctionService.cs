@@ -93,12 +93,12 @@ namespace Leagify.AuctionDrafter.Server.Services
         public async Task AssignRoleAsync(int auctionId, int userId, Role role)
         {
             var auction = _auctions.FirstOrDefault(a => a.Id == auctionId);
-            if (auction != null)
+            if (auction != null && auction.Participants != null)
             {
                 var user = auction.Participants.FirstOrDefault(u => u.Id == userId);
                 if (user != null)
                 {
-                    user.Role = role;
+                    user.Roles?.Add(role);
                     await _hubContext.Clients.Group(auctionId.ToString()).SendAsync("RoleAssigned", userId, role);
                 }
             }
