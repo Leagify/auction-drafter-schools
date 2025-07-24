@@ -1,3 +1,5 @@
+using Leagify.AuctionDrafter.Shared.Models;
+
 namespace Leagify.AuctionDrafter.Shared.Dtos
 {
     public class AssignRoleDto
