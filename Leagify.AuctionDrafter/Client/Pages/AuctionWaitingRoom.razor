@@ -89,13 +89,8 @@ else
     {
         if (value is string roleStr && Enum.TryParse<Role>(roleStr, out var role))
         {
-            await AssignRole(user, role);
+            await Http.PostAsJsonAsync($"api/auction/{AuctionId}/assignrole", new { UserId = user.Id, Role = role });
         }
-    }
-
-    private async Task AssignRole(User user, Role role)
-    {
-        await Http.PostAsJsonAsync($"api/auction/{AuctionId}/assignrole", new { UserId = user.Id, Role = role });
     }
 
     private void StartAuction()
