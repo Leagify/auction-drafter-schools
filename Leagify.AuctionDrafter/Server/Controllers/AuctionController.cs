@@ -105,19 +105,14 @@ namespace Leagify.AuctionDrafter.Server.Controllers
         [HttpPost("{auctionId}/assignrole")]
         public async Task<IActionResult> AssignRole(int auctionId, [FromBody] AssignRoleDto assignRoleDto)
         {
-            if (assignRoleDto == null || assignRoleDto.Role == null)
+            if (assignRoleDto == null)
             {
-                return BadRequest("Assign role details are null or role is not specified.");
-            }
-
-            if (!Enum.IsDefined(typeof(Role), assignRoleDto.Role.Value))
-            {
-                return BadRequest("Invalid role specified.");
+                return BadRequest("Assign role details are null.");
             }
 
             try
             {
-                await _auctionService.AssignRoleAsync(auctionId, assignRoleDto.UserId, assignRoleDto.Role.Value);
+                await _auctionService.AssignRoleAsync(auctionId, assignRoleDto.UserId, assignRoleDto.Role);
                 return Ok();
             }
             catch (System.Exception ex)

@@ -25,10 +25,10 @@ else
                 {
                     <select @onchange="(e) => HandleRoleChange(user, e.Value)">
                         <option value="">Assign Role</option>
-                        @foreach (var role in Enum.GetValues(typeof(Role)))
-                        {
-                            <option value="@role">@role</option>
-                        }
+                        <option value="@Role.AuctionMaster">@Role.AuctionMaster</option>
+                        <option value="@Role.TeamCoach">@Role.TeamCoach</option>
+                        <option value="@Role.ProxyCoach">@Role.ProxyCoach</option>
+                        <option value="@Role.AuctionViewer">@Role.AuctionViewer</option>
                     </select>
                 }
             </li>
@@ -87,8 +87,9 @@ else
 
     private async Task HandleRoleChange(User user, object? value)
     {
-        if (value is string roleStr && Enum.TryParse<Role>(roleStr, out var role))
+        if (value is string roleName)
         {
+            var role = new Role { Name = roleName };
             await Http.PostAsJsonAsync($"api/auction/{AuctionId}/assignrole", new { UserId = user.Id, Role = role });
         }
     }
