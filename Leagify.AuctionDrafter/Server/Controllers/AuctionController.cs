@@ -110,6 +110,11 @@ namespace Leagify.AuctionDrafter.Server.Controllers
                 return BadRequest("Assign role details are null.");
             }
 
+            if (!Enum.IsDefined(typeof(Role), assignRoleDto.Role))
+            {
+                return BadRequest("Invalid role specified.");
+            }
+
             try
             {
                 await _auctionService.AssignRoleAsync(auctionId, assignRoleDto.UserId, assignRoleDto.Role);

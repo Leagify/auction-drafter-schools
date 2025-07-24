@@ -23,7 +23,7 @@ else
                 @user.DisplayName
                 @if (IsAuctionMaster)
                 {
-                    <select @onchange="(e) => AssignRole(user, e.Value!.ToString())">
+                    <select @onchange="(e) => { if (e.Value != null) { AssignRole(user, e.Value.ToString()); } }">
                         <option value="">Assign Role</option>
                         @foreach (var role in Enum.GetValues(typeof(Role)))
                         {
@@ -89,7 +89,7 @@ else
     {
         if (Enum.TryParse<Role>(roleStr, out var role))
         {
-            await Http.PostAsJsonAsync($"api/auction/{AuctionId}/assignrole", new { UserId = user.Id, Role = (Role?)role });
+            await Http.PostAsJsonAsync($"api/auction/{AuctionId}/assignrole", new { UserId = user.Id, Role = role });
         }
     }
 
