@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Leagify.AuctionDrafter.Shared.Models;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Leagify.AuctionDrafter.Server.Services
 {
