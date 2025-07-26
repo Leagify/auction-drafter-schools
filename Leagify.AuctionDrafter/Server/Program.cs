@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Leagify.AuctionDrafter.Server.Data;
 using Leagify.AuctionDrafter.Server.Services; // For ICsvParsingService, IAuctionService
 using Microsoft.AspNetCore.Builder; // Added for WebApplication extension methods
-using Leagify.AuctionDrafter.Server; // Added for AuctionHub
 // No need to explicitly add 'using Leagify.AuctionDrafter.Server' for SeedIdentityData if namespace matches Program.cs implicit namespace
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,8 +35,7 @@ builder.Services.AddSwaggerGen();
 
 // Register custom application services
 builder.Services.AddSingleton<ICsvParsingService, CsvParsingService>(); // Changed from Scoped to Singleton
-builder.Services.AddSingleton<IAuctionService, AuctionService>(); // Singleton for in--memory auction data
-builder.Services.AddSignalR();
+builder.Services.AddSingleton<IAuctionService, AuctionService>(); // Singleton for in-memory auction data
 
 var app = builder.Build();
 
@@ -87,7 +85,6 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapControllers();
-app.MapHub<AuctionHub>("/auctionhub");
 app.MapFallbackToFile("index.html");
 
 app.Run();

@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Leagify.AuctionDrafter.Shared.Models;
-using Microsoft.AspNetCore.SignalR;
 
 namespace Leagify.AuctionDrafter.Server.Services
 {
@@ -13,7 +12,6 @@ namespace Leagify.AuctionDrafter.Server.Services
         Task<Auction> CreateAuctionAsync(string auctionName, int auctionMasterUserId, Stream? schoolDataCsvStream);
         Task<Auction?> GetAuctionByIdAsync(int auctionId);
         Task<List<School>> GetSchoolsForAuctionAsync(int auctionId);
-        Task AssignRoleAsync(int auctionId, int userId, Role role);
         // Add more methods as needed: UpdateAuction, AddTeamToAuction, etc.
     }
 
@@ -21,16 +19,14 @@ namespace Leagify.AuctionDrafter.Server.Services
     {
         private readonly ICsvParsingService _csvParsingService;
         private readonly ILogger<AuctionService> _logger;
-        private readonly IHubContext<AuctionHub> _hubContext;
         // In-memory store for now
         private readonly List<Auction> _auctions = new List<Auction>();
         private static int _nextAuctionId = 1;
 
-        public AuctionService(ICsvParsingService csvParsingService, ILogger<AuctionService> logger, IHubContext<AuctionHub> hubContext)
+        public AuctionService(ICsvParsingService csvParsingService, ILogger<AuctionService> logger)
         {
             _csvParsingService = csvParsingService;
             _logger = logger;
-            _hubContext = hubContext;
         }
 
         public async Task<Auction> CreateAuctionAsync(string auctionName, int auctionMasterUserId, Stream? schoolDataCsvStream)
@@ -42,8 +38,7 @@ namespace Leagify.AuctionDrafter.Server.Services
                 AuctionMasterUserId = auctionMasterUserId, // Assuming User ID 1 is a valid master for now
                 Status = AuctionStatus.NotStarted,
                 CreatedDate = DateTime.UtcNow,
-                SchoolsAvailable = new List<School>(),
-                JoinCode = Guid.NewGuid().ToString("N").Substring(0, 6).ToUpper()
+                SchoolsAvailable = new List<School>()
             };
 
             if (schoolDataCsvStream != null)
@@ -88,20 +83,6 @@ namespace Leagify.AuctionDrafter.Server.Services
                 return Task.FromResult(auction.SchoolsAvailable.ToList());
             }
             return Task.FromResult(new List<School>());
-        }
-
-        public async Task AssignRoleAsync(int auctionId, int userId, Role role)
-        {
-            var auction = _auctions.FirstOrDefault(a => a.Id == auctionId);
-            if (auction != null && auction.Participants != null)
-            {
-                var user = auction.Participants.FirstOrDefault(u => u.Id == userId);
-                if (user != null)
-                {
-                    user.Roles?.Add(role);
-                    await _hubContext.Clients.Group(auctionId.ToString()).SendAsync("RoleAssigned", userId, role);
-                }
-            }
         }
     }
 }
