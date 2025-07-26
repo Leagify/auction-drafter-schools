@@ -7,29 +7,28 @@ The goal is for this repository will be a Blazor WASM (Webassembly) C# SignalR w
 
 
 ## General design:
-+ Users can log in as one of several roles. A user can have multiple roles. Here are the roles that exist, and a general description:
-  - Auction master. They can create and manage an auction for a league.
-  - Team coach. They can bid for a school for their team and assign it to a position on their roster
-  - Auction viewer. They can view the auction.
-  - Proxy coach. They can bid on behalf of a a team coach who is not present for the auction but would like to have a team.
-+ Once an auction master creates a draft, other users can choose to join a draft as team coach.
-+ A user can be both a team coach and proxy coach.  They can bid as both coaches in the same auction. In that case, the bidding would be handled via a dropdown menu or some other easily selectable means.
-+ The auction can be viewed by anyone.
++ When a user creates a new auction, they become the "Auction Master" for that event.
++ The application will generate a unique "Join Code" for each auction.
++ The Auction Master shares this code with other participants.
++ Other users can join the auction by entering the Join Code. Once they have joined, the Auction Master can assign them one or more of the following roles:
+  - **Team Coach:** Can bid on schools and manage a team roster.
+  - **Proxy Coach:** Can bid on behalf of a Team Coach.
+  - **Auction Viewer:** Has read-only access to the auction.
++ A user can have multiple roles (e.g., be a Team Coach for one team and a Proxy Coach for another in the same auction).
++ The auction can be viewed by anyone who has the join code.
 
-+ **User Roles and Permissions:** A user can have multiple roles, which are assigned by an Auction Master.
++ **User Roles and Permissions:** Roles are assigned by the Auction Master after a user joins via the join code.
 
 | Action                       | Auction Master | Team Coach | Proxy Coach | Auction Viewer |
 | ---------------------------- | :------------: | :--------: | :---------: | :------------: |
 | Create / Configure Auction   |       ✅       |     ❌     |      ❌     |       ❌       |
 | Upload Draft Template (CSV)  |       ✅       |     ❌     |      ❌     |       ❌       |
-| Add / Remove Users from Auction |       ✅       |     ❌     |      ❌     |       ❌       |
+| Assign Roles to Users        |       ✅       |     ❌     |      ❌     |       ❌       |
 | Start / Pause / End Auction  |       ✅       |     ❌     |      ❌     |       ❌       |
 | Nominate a School            |       ❌       |     ✅     |      ✅     |       ❌       |
 | Bid on a School              |       ❌       |     ✅     |      ✅     |       ❌       |
 | View All Rosters & Budgets   |       ✅       |     ✅     |      ✅     |       ✅       |
 | Download Final Results       |       ✅       |     ✅     |      ✅     |       ✅       |
-
-+ It would be nice if you could log in using Google Auth to make an account.
 
 + Team coaches pick from a "draft board".
 + At this time, the draft board loads information from a CSV draft template file uploaded by the auction master.  The format of the draft template is similar to the template at the root of this repo, named "SampleDraftTemplate.csv"
@@ -173,7 +172,7 @@ To help guide development, we can break the project down into the following stor
 
 To support the features above, the application will need to manage several key entities in its database. This is not a final schema, but a guide for development.
 
-* **User:** Stores account information from Google Auth and their assigned application roles (Auction Master, etc.).
+* **User:** Represents a participant in the auction. Since there's no login system, this could be a simple identifier generated when a user joins with a code, linked to the roles assigned by the Auction Master.
 * **Auction:** The main container for a single draft event. It would have a status (e.g., Not Started, In Progress, Complete).
 * **Team:** Represents a coach's entry in a specific `Auction`. It would hold the `User` ID, the team's budget, and be linked to the `Auction`.
 * **School (Player):** The information loaded from the CSV, linked to a specific `Auction`. Contains all the stats like `ProjectedPoints`, `Conference`, etc.
